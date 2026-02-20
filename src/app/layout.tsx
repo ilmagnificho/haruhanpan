@@ -38,6 +38,8 @@ export default function RootLayout({
             />
           </>
         )}
+        {/* 네이버 서치어드바이저 - searchadvisor.naver.com 등록 후 content 값 교체 */}
+        <meta name="naver-site-verification" content="NAVER_VERIFICATION_CODE_HERE" />
         {/* Google AdSense */}
         {process.env.NEXT_PUBLIC_ADSENSE_CLIENT && process.env.NEXT_PUBLIC_ADSENSE_CLIENT !== 'placeholder_replace_later' && (
           <script
