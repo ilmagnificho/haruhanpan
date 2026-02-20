@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Header from '@/components/Header';
 import ResultImage from '@/components/ResultImage';
 import ShareButtons from '@/components/ShareButtons';
 import AdBanner from '@/components/AdBanner';
+import ZodiacIcon from '@/components/ZodiacIcon';
 import fortuneData from '@/data/fortune.json';
 import { getZodiacFromYear, getTodayFortuneIndex, type ZodiacKey } from '@/lib/fortune-calc';
 
@@ -50,6 +50,13 @@ export default function FortunePage() {
     setShowResult(true);
   };
 
+  const today = new Date();
+  const dateString = today.toLocaleDateString('ko-KR', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    weekday: 'long',
+  });
   const dayIndex = getTodayFortuneIndex().toString();
   const animalData = zodiac ? (fortuneData as Record<string, FortuneAnimal>)[zodiac] : null;
   const todayFortune = animalData?.daily[dayIndex];
@@ -57,35 +64,40 @@ export default function FortunePage() {
   if (!showResult || !zodiac || !animalData || !todayFortune) {
     return (
       <div className="min-h-screen bg-background">
-        <Header />
-        <main className="px-4 py-8">
-          <div className="text-center mb-10">
-            <div className="text-[80px] mb-2">🔮</div>
-            <h1 className="text-senior-xl font-bold text-text-primary">
-              오늘의 띠별 운세
-            </h1>
-            <p className="text-senior-xs text-text-secondary mt-2">
-              태어난 해를 입력하세요
-            </p>
-          </div>
+        <header className="pt-8 pb-4 px-6 text-center border-b border-primary/10">
+          <h1 className="text-[32px] font-bold text-primary tracking-tight leading-tight">
+            오늘의 띠별 운세
+          </h1>
+          <p className="text-[20px] font-medium text-text-secondary mt-2">
+            {dateString}
+          </p>
+        </header>
 
-          <div className="max-w-xs mx-auto">
+        <main className="px-6 py-8">
+          <div className="space-y-4">
+            <label className="block text-[22px] font-bold text-text-primary">
+              태어난 해를 입력하세요
+            </label>
             <input
               type="number"
               inputMode="numeric"
               placeholder="예: 1965"
               value={birthYear}
               onChange={(e) => setBirthYear(e.target.value)}
-              className="w-full h-16 text-center text-senior-lg font-bold border-2 border-border rounded-2xl bg-card text-text-primary focus:border-primary focus:outline-none"
+              className="w-full h-16 px-5 text-center text-[24px] font-bold border-4 border-primary/20 rounded-xl bg-card text-text-primary focus:border-primary focus:outline-none focus:ring-0 transition-colors placeholder:text-slate-400"
               min={1930}
               max={2010}
             />
             <button
               onClick={handleSubmit}
               disabled={!birthYear || birthYear.length !== 4}
-              className="w-full mt-4 min-h-[64px] bg-gradient-to-r from-primary to-[#FF6B4A] text-white text-senior-sm font-bold rounded-2xl shadow-lg disabled:opacity-40 disabled:cursor-not-allowed"
+              className="w-full h-[68px] bg-primary text-white text-[24px] font-bold rounded-xl senior-shadow disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 active:scale-95 transition-transform"
             >
-              운세 보기 ✨
+              <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+              운세 보기
             </button>
           </div>
         </main>
@@ -94,19 +106,28 @@ export default function FortunePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-background">
-      <Header />
+    <div className="min-h-screen bg-background">
+      <header className="pt-8 pb-4 px-6 text-center border-b border-primary/10">
+        <h1 className="text-[32px] font-bold text-primary tracking-tight leading-tight">
+          오늘의 띠별 운세
+        </h1>
+        <p className="text-[20px] font-medium text-text-secondary mt-2">
+          {dateString}
+        </p>
+      </header>
 
-      <main className="px-4 py-6">
+      <main className="px-5 py-6">
         <AdBanner className="mb-6" />
 
-        <div className="text-center mb-6">
-          <span className="text-[64px]">{animalData.emoji}</span>
-          <h2 className="text-senior-xl font-bold text-text-primary mt-2">
-            {animalData.name} 오늘의 운세
+        {/* 띠별 아이콘 + 이름 */}
+        <div className="flex flex-col items-center gap-2 mb-6">
+          <ZodiacIcon zodiac={zodiac} className="w-20 h-20" />
+          <h2 className="text-[32px] font-bold text-primary">
+            {animalData.name} 운세
           </h2>
         </div>
 
+        {/* 결과 이미지 (저장용) */}
         <ResultImage
           testTitle="오늘의 운세"
           leadText={`${animalData.name} ${animalData.emoji}`}
@@ -116,23 +137,30 @@ export default function FortunePage() {
           gradientColors={GRADIENT_COLORS[zodiac]}
         />
 
-        <div className="mt-6 bg-white rounded-3xl p-7 shadow-lg border border-gray-100">
-          <p className="text-senior-sm text-text-primary leading-relaxed text-center">
-            {todayFortune.text}
+        {/* 골든 운세 카드 */}
+        <div className="mt-6 golden-card rounded-2xl p-8 senior-shadow relative">
+          <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gold-accent px-4 py-1 rounded-full text-sm font-bold text-amber-900 uppercase tracking-widest">
+            Today&apos;s Luck
+          </div>
+          <p className="text-[22px] leading-[1.6] text-text-primary font-medium text-center mt-2">
+            &ldquo;{todayFortune.text}&rdquo;
           </p>
-          <div className="mt-5 flex gap-4">
-            <div className="flex-1 bg-gradient-to-br from-primary/5 to-primary/10 rounded-2xl p-4 text-center">
-              <p className="text-[15px] text-text-secondary">행운의 숫자</p>
-              <p className="text-[32px] font-bold text-primary mt-1">
-                {todayFortune.lucky_number}
-              </p>
-            </div>
-            <div className="flex-1 bg-gradient-to-br from-primary/5 to-primary/10 rounded-2xl p-4 text-center">
-              <p className="text-[15px] text-text-secondary">행운의 색</p>
-              <p className="text-senior-lg font-bold text-primary mt-1">
-                {todayFortune.lucky_color}
-              </p>
-            </div>
+        </div>
+
+        {/* 행운 정보 */}
+        <div className="mt-5 flex items-center py-4 px-2 bg-white/50 rounded-xl border border-slate-200">
+          <div className="flex-1 text-center">
+            <p className="text-[16px] text-text-secondary">행운의 숫자</p>
+            <p className="text-[32px] font-bold text-primary mt-1">
+              {todayFortune.lucky_number}
+            </p>
+          </div>
+          <div className="w-px h-12 bg-gold-accent/30" />
+          <div className="flex-1 text-center">
+            <p className="text-[16px] text-text-secondary">행운의 색</p>
+            <p className="text-senior-lg font-bold text-primary mt-1">
+              {todayFortune.lucky_color}
+            </p>
           </div>
         </div>
 
@@ -140,6 +168,7 @@ export default function FortunePage() {
           filename={`하루한판_오늘의운세_${animalData.name}.png`}
           kakaoTitle={`${animalData.name} 오늘의 운세`}
           kakaoDescription="하루한판에서 오늘의 운세를 확인해보세요!"
+          saveButtonClassName="bg-save-green hover:bg-save-green/90"
         />
 
         <AdBanner className="mt-8" />

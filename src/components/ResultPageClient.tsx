@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import Header from '@/components/Header';
 import ResultImage from '@/components/ResultImage';
 import ShareButtons from '@/components/ShareButtons';
 import InterstitialAd from '@/components/InterstitialAd';
@@ -48,6 +47,12 @@ const TEST_MAP: Record<string, TestInfo> = {
   },
 };
 
+const OTHER_TESTS = [
+  { id: 'past-life', href: '/test/past-life/', icon: '🏛️', title: '전생 테스트' },
+  { id: 'health-age', href: '/test/health-age/', icon: '💪', title: '건강 나이 테스트' },
+  { id: 'idiom', href: '/test/idiom/', icon: '📜', title: '사자성어 테스트' },
+];
+
 export default function ResultPageClient({
   testId,
   resultId,
@@ -82,71 +87,91 @@ export default function ResultPageClient({
     );
   }
 
-  const displayTitle = result.subtitle
-    ? `${result.title} - ${result.subtitle}`
-    : result.title;
-
   if (!mounted) return null;
 
   if (!showResult) {
     return <InterstitialAd onComplete={handleAdComplete} />;
   }
 
+  const recommendations = OTHER_TESTS.filter((t) => t.id !== testId).slice(0, 2);
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-background">
-      <Header />
-
-      <main className="px-4 py-6">
-        {/* 축하 메시지 */}
-        <div className="text-center mb-6">
-          <p className="text-[40px]">🎉</p>
-          <h1 className="text-senior-xl font-bold text-text-primary mt-1">
-            결과가 나왔어요!
-          </h1>
+    <div className="min-h-screen bg-background-dark text-white">
+      {/* 미니 헤더 */}
+      <div className="px-5 py-4 flex items-center justify-between sticky top-0 z-50 bg-background-dark/80 backdrop-blur-md border-b border-primary-green/10">
+        <div className="flex items-center gap-2">
+          <span className="text-xl font-extrabold text-primary-green tracking-tight">하루한판</span>
         </div>
+        <a href="/" className="p-2 hover:bg-white/5 rounded-full transition-colors">
+          <svg className="w-6 h-6 text-white/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </a>
+      </div>
 
-        {/* 결과 이미지 - 풀 너비 */}
-        <ResultImage
-          testTitle={test.title}
-          leadText={test.leadText}
-          resultTitle={result.title}
-          resultDescription={result.description}
-          emoji={test.emoji}
-          gradientColors={test.gradientColors}
-        />
-
-        {/* 결과 상세 카드 */}
-        <div className="mt-6 bg-white rounded-3xl p-7 shadow-lg border border-gray-100">
-          <div className="text-center">
-            <span className="inline-block text-[14px] font-bold text-white bg-gradient-to-r from-primary to-[#FF6B4A] px-4 py-1.5 rounded-full mb-4">
-              {test.title}
-            </span>
-            <h2 className="text-[26px] font-bold text-text-primary mb-4">
-              {displayTitle}
-            </h2>
-            <p className="text-senior-sm text-text-secondary leading-relaxed">
-              {result.description}
-            </p>
+      <main className="max-w-md mx-auto px-5 pt-4 pb-24">
+        {/* 결과 이미지 카드 */}
+        <div className="relative">
+          <ResultImage
+            testTitle={test.title}
+            leadText={test.leadText}
+            resultTitle={result.title}
+            resultDescription={result.description}
+            emoji={test.emoji}
+            gradientColors={test.gradientColors}
+            theme="dark-premium"
+          />
+          {/* 축하 아이콘 */}
+          <div className="absolute -top-3 -right-3 bg-primary-green text-white p-2.5 rounded-full shadow-lg transform rotate-12">
+            <span className="text-2xl block leading-none">🎉</span>
           </div>
         </div>
 
-        {/* 공유 버튼 */}
-        <ShareButtons
-          filename={`하루한판_${test.title}_결과.png`}
-          kakaoTitle={`나의 ${test.title} 결과: "${result.title}"`}
-          kakaoDescription="하루한판에서 나도 해보기!"
-        />
+        {/* 액션 버튼 */}
+        <div className="mt-8 space-y-4">
+          <ShareButtons
+            filename={`하루한판_${test.title}_결과.png`}
+            kakaoTitle={`나의 ${test.title} 결과: "${result.title}"`}
+            kakaoDescription="하루한판에서 나도 해보기!"
+            saveButtonClassName="bg-primary-green hover:bg-primary-green/90"
+          />
+        </div>
 
-        <AdBanner className="mt-8" format="rectangle" />
-
-        <div className="text-center mt-8 mb-6">
+        {/* 다른 테스트 */}
+        <div className="text-center py-4 mt-2">
           <a
             href="/"
-            className="inline-block text-senior-xs font-bold text-primary bg-primary/10 px-6 py-3 rounded-full"
+            className="text-white/50 text-xl font-semibold inline-flex items-center gap-1 hover:text-primary-green transition-colors"
           >
-            🎯 다른 테스트 해보기
+            다른 테스트 해보기
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
           </a>
         </div>
+
+        {/* 추천 테스트 */}
+        <div className="pt-8 border-t border-primary-green/20">
+          <h3 className="text-[20px] font-bold text-white/90 mb-4 flex items-center gap-2">
+            <span className="text-primary-green">✨</span>
+            다른 테스트도 해보세요
+          </h3>
+          <div className="grid grid-cols-2 gap-4">
+            {recommendations.map((rec) => (
+              <a
+                key={rec.id}
+                href={rec.href}
+                className="bg-primary-green/10 rounded-xl p-5 border border-primary-green/10 text-center active:scale-95 transition-transform"
+              >
+                <span className="text-[40px] block">{rec.icon}</span>
+                <p className="text-[15px] font-bold text-white/80 mt-3">{rec.title}</p>
+              </a>
+            ))}
+          </div>
+        </div>
+
+        {/* 광고 */}
+        <AdBanner className="mt-8" format="rectangle" />
       </main>
     </div>
   );

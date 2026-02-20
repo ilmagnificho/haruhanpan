@@ -16,6 +16,11 @@ const config: Config = {
         'text-primary': '#1A1A1A',
         'text-secondary': '#4A4A4A',
         border: '#E2D5C5',
+        'gold-accent': '#FFD700',
+        'save-green': '#2DB400',
+        'kakao-yellow': '#FEE500',
+        'background-dark': '#141e16',
+        'primary-green': '#2b883d',
       },
       fontSize: {
         'senior-xs': '18px',

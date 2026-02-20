@@ -54,3 +54,19 @@ button:active {
 ::selection {
   background: #D4382C33;
 }
+
+/* Senior Shadow - Stitch 디자인 카드 그림자 */
+.senior-shadow {
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+}
+
+/* Gold glow 텍스트 효과 (결과 페이지) */
+.gold-glow {
+  text-shadow: 0 0 20px rgba(255, 215, 0, 0.5), 0 0 40px rgba(255, 215, 0, 0.3);
+}
+
+/* 운세 카드 골든 그라디언트 */
+.golden-card {
+  background: linear-gradient(135deg, #FFFDF0, #FFF9C4);
+  border: 2px solid #FFD700;
+}

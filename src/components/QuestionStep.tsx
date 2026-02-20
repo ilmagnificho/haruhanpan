@@ -21,9 +21,6 @@ interface QuestionStepProps {
   onBack: () => void;
 }
 
-const OPTION_EMOJIS = ['🅰️', '🅱️', '🅲', '🅳'];
-const STEP_EMOJIS = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣'];
-
 export default function QuestionStep({
   question,
   currentStep,
@@ -45,58 +42,51 @@ export default function QuestionStep({
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* 상단 바 */}
-      <div className="bg-white shadow-sm px-4 py-3 flex items-center justify-between">
+      <header className="flex items-center justify-between px-6 py-8">
         <button
           onClick={onBack}
-          className="text-senior-xs text-text-secondary min-h-0 py-2 px-3 rounded-full hover:bg-gray-100"
+          className="flex items-center gap-1 text-text-primary font-bold text-xl min-h-0 py-2 active:opacity-60 transition-opacity"
         >
-          ← 이전
+          <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+          이전
         </button>
-        <div className="flex items-center gap-2">
-          <span className="text-[20px]">{STEP_EMOJIS[currentStep - 1] || `${currentStep}`}</span>
-          <span className="text-senior-xs font-bold text-text-primary">
-            {currentStep} / {totalSteps}
-          </span>
+        <div className="text-text-primary font-bold text-2xl tracking-widest">
+          {currentStep} / {totalSteps}
         </div>
-        <div className="w-16" />
-      </div>
+        <div className="w-20" />
+      </header>
 
       {/* 진행 바 */}
-      <div className="px-4 pt-4">
-        <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
+      <div className="px-6 mb-12">
+        <div className="w-full h-3 bg-primary/20 rounded-full overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-primary to-[#FF6B4A] rounded-full transition-all duration-500 ease-out"
+            className="h-full bg-primary rounded-full transition-all duration-500 ease-out"
             style={{ width: `${(currentStep / totalSteps) * 100}%` }}
           />
         </div>
       </div>
 
-      {/* 질문 */}
-      <div className="flex-1 flex flex-col justify-center px-6 py-8">
-        <div className="bg-white rounded-3xl shadow-lg p-8 mb-8">
-          <p className="text-[15px] text-primary font-bold text-center mb-3">
-            Q{currentStep}.
-          </p>
-          <h2 className="text-senior-xl font-bold text-text-primary text-center leading-relaxed">
-            {question.text}
-          </h2>
-        </div>
+      {/* 질문 + 선택지 */}
+      <div className="flex-1 flex flex-col px-6">
+        <h2 className="text-[26px] font-bold text-text-primary text-center leading-snug mb-12">
+          {question.text}
+        </h2>
 
-        {/* 선택지 */}
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-4">
           {question.options.map((option, index) => (
             <button
               key={index}
               onClick={() => handleSelect(index, option.scores)}
               disabled={selected !== null}
-              className={`w-full min-h-[68px] px-5 py-4 rounded-2xl text-senior-sm font-medium text-left transition-all duration-300 flex items-center gap-3 ${
+              className={`w-full min-h-[72px] px-6 py-4 rounded-xl text-senior-sm font-semibold text-center transition-all duration-300 ${
                 selected === index
-                  ? 'bg-gradient-to-r from-primary to-[#FF6B4A] text-white scale-[0.96] shadow-xl'
-                  : 'bg-white text-text-primary shadow-md hover:shadow-lg border-2 border-transparent hover:border-primary/20'
+                  ? 'bg-primary text-white font-bold ring-4 ring-primary/20 shadow-lg scale-[0.98]'
+                  : 'bg-white text-text-primary shadow-sm border-2 border-slate-100'
               } ${selected !== null && selected !== index ? 'opacity-40 scale-[0.98]' : ''}`}
             >
-              <span className="text-[22px] flex-shrink-0">{OPTION_EMOJIS[index]}</span>
-              <span>{option.text}</span>
+              {option.text}
             </button>
           ))}
         </div>

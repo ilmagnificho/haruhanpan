@@ -229,6 +229,142 @@ export async function generateResultCard(
   ctx.fillText('매일 새로운 재미 · 하루한판', cx, CANVAS_HEIGHT - 80);
 }
 
+// === 다크 프리미엄 테마 (결과 페이지용) ===
+const DARK_WIDTH = 1080;
+const DARK_HEIGHT = 1350;
+
+export async function generateDarkResultCard(
+  canvas: HTMLCanvasElement,
+  options: ResultCardOptions
+): Promise<void> {
+  const {
+    testTitle,
+    resultTitle,
+    resultDescription,
+    emoji = '✨',
+  } = options;
+
+  await loadFont();
+
+  canvas.width = DARK_WIDTH;
+  canvas.height = DARK_HEIGHT;
+  const ctx = canvas.getContext('2d')!;
+  const fontFamily = "'NanumSquareRound', 'Malgun Gothic', sans-serif";
+  const cx = DARK_WIDTH / 2;
+
+  // === 다크 배경 그라디언트 ===
+  const bgGrad = ctx.createLinearGradient(0, 0, 0, DARK_HEIGHT);
+  bgGrad.addColorStop(0, '#141e16');
+  bgGrad.addColorStop(0.5, '#1a2b1e');
+  bgGrad.addColorStop(1, '#0f1a12');
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0, 0, DARK_WIDTH, DARK_HEIGHT);
+
+  // === 전통 패턴 (금색 도트) ===
+  ctx.globalAlpha = 0.04;
+  ctx.fillStyle = '#FFD700';
+  for (let i = 0; i < 50; i++) {
+    const x = (Math.sin(i * 2.3) * 0.5 + 0.5) * DARK_WIDTH;
+    const y = (Math.cos(i * 1.9) * 0.5 + 0.5) * DARK_HEIGHT;
+    ctx.beginPath();
+    ctx.arc(x, y, 3 + (i % 4) * 2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  for (let i = 0; i < 6; i++) {
+    const x = Math.sin(i * 1.5) * 300 + cx;
+    const y = i * 220 + 120;
+    const r = 60 + (i % 3) * 40;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
+  // === 장식 코너 (좌상단, 우하단) ===
+  const cornerSize = 80;
+  const cornerInset = 50;
+  ctx.strokeStyle = '#2b883d';
+  ctx.lineWidth = 6;
+  // 좌상단
+  ctx.beginPath();
+  ctx.moveTo(cornerInset, cornerInset + cornerSize);
+  ctx.lineTo(cornerInset, cornerInset);
+  ctx.lineTo(cornerInset + cornerSize, cornerInset);
+  ctx.stroke();
+  // 우하단
+  ctx.beginPath();
+  ctx.moveTo(DARK_WIDTH - cornerInset, DARK_HEIGHT - cornerInset - cornerSize);
+  ctx.lineTo(DARK_WIDTH - cornerInset, DARK_HEIGHT - cornerInset);
+  ctx.lineTo(DARK_WIDTH - cornerInset - cornerSize, DARK_HEIGHT - cornerInset);
+  ctx.stroke();
+
+  // === 테스트 라벨 ===
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#2b883d';
+  ctx.font = `bold 36px ${fontFamily}`;
+  ctx.fillText(`✨ ${testTitle} 결과 ✨`, cx, 160);
+
+  // === 구분선 ===
+  ctx.strokeStyle = 'rgba(43, 136, 61, 0.3)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(cx - 60, 190);
+  ctx.lineTo(cx + 60, 190);
+  ctx.stroke();
+
+  // === 큰 이모지 ===
+  ctx.font = `100px ${fontFamily}`;
+  ctx.fillText(emoji, cx, 340);
+
+  // === 메인 결과 타이틀 (골드) ===
+  ctx.fillStyle = '#FFD700';
+  ctx.shadowColor = 'rgba(255, 215, 0, 0.5)';
+  ctx.shadowBlur = 30;
+  ctx.font = `bold 64px ${fontFamily}`;
+  const titleLines = resultTitle.length > 10
+    ? splitKoreanText(resultTitle)
+    : [resultTitle];
+  let titleY = 480;
+  for (const line of titleLines) {
+    ctx.fillText(line, cx, titleY);
+    titleY += 80;
+  }
+  ctx.shadowBlur = 0;
+
+  // === 결과 설명 ===
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+  ctx.font = `32px ${fontFamily}`;
+  wrapText(ctx, resultDescription, cx, titleY + 30, DARK_WIDTH - 200, 50);
+
+  // === "공유하면 복이 와요!" ===
+  ctx.fillStyle = 'rgba(255,255,255,0.08)';
+  roundRect(ctx, 100, 880, DARK_WIDTH - 200, 90, 45);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,0.7)';
+  ctx.font = `bold 30px ${fontFamily}`;
+  ctx.fillText('친구에게 공유하면 행운이 2배! 🍀', cx, 935);
+
+  // === 워터마크 ===
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  roundRect(ctx, 80, 1030, DARK_WIDTH - 160, 200, 24);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(43, 136, 61, 0.3)';
+  ctx.lineWidth = 1;
+  roundRect(ctx, 80, 1030, DARK_WIDTH - 160, 200, 24);
+  ctx.stroke();
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = 'rgba(255,255,255,0.6)';
+  ctx.font = `bold 36px ${fontFamily}`;
+  ctx.fillText('네이버에서', cx, 1110);
+  ctx.fillStyle = '#ffffff';
+  ctx.font = `bold 48px ${fontFamily}`;
+  ctx.fillText('"하루한판" 검색!', cx, 1170);
+  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  ctx.font = `22px ${fontFamily}`;
+  ctx.fillText('haruhanpan.com', cx, 1210);
+}
+
 function splitKoreanText(text: string): string[] {
   const mid = Math.ceil(text.length / 2);
   let splitAt = mid;

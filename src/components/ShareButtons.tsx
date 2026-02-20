@@ -7,12 +7,14 @@ interface ShareButtonsProps {
   filename: string;
   kakaoTitle?: string;
   kakaoDescription?: string;
+  saveButtonClassName?: string;
 }
 
 export default function ShareButtons({
   filename,
   kakaoTitle,
   kakaoDescription,
+  saveButtonClassName,
 }: ShareButtonsProps) {
   const [saved, setSaved] = useState(false);
 
@@ -41,7 +43,7 @@ export default function ShareButtons({
         className={`w-full min-h-[72px] text-white text-[22px] font-bold rounded-2xl shadow-xl active:scale-[0.97] transition-all duration-200 ${
           saved
             ? 'bg-green-500'
-            : 'bg-gradient-to-r from-primary to-[#FF6B4A] hover:shadow-2xl'
+            : saveButtonClassName || 'bg-gradient-to-r from-primary to-[#FF6B4A] hover:shadow-2xl'
         }`}
       >
         {saved ? '저장 완료! 카톡에 공유해보세요 ✅' : '📸 이미지 저장하기'}
