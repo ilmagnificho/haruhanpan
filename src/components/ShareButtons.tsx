@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { downloadCanvasImage, shareKakao } from '@/lib/share';
 
 interface ShareButtonsProps {
@@ -13,10 +14,14 @@ export default function ShareButtons({
   kakaoTitle,
   kakaoDescription,
 }: ShareButtonsProps) {
+  const [saved, setSaved] = useState(false);
+
   const handleDownload = () => {
     const canvas = document.getElementById('result-canvas') as HTMLCanvasElement;
     if (!canvas) return;
     downloadCanvasImage(canvas, filename);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 3000);
   };
 
   const handleKakaoShare = () => {
@@ -30,19 +35,26 @@ export default function ShareButtons({
   };
 
   return (
-    <div className="flex flex-col gap-4 w-full mt-6">
+    <div className="flex flex-col gap-3 w-full mt-8">
       <button
         onClick={handleDownload}
-        className="w-full min-h-[64px] bg-primary text-white text-senior-sm font-bold rounded-2xl shadow-lg active:scale-[0.97] transition-transform"
+        className={`w-full min-h-[72px] text-white text-[22px] font-bold rounded-2xl shadow-xl active:scale-[0.97] transition-all duration-200 ${
+          saved
+            ? 'bg-green-500'
+            : 'bg-gradient-to-r from-primary to-[#FF6B4A] hover:shadow-2xl'
+        }`}
       >
-        이미지 저장하기
+        {saved ? '저장 완료! 카톡에 공유해보세요 ✅' : '📸 이미지 저장하기'}
       </button>
       <button
         onClick={handleKakaoShare}
-        className="w-full min-h-[56px] bg-[#FEE500] text-[#3C1E1E] text-senior-xs font-bold rounded-2xl shadow-md active:scale-[0.97] transition-transform"
+        className="w-full min-h-[60px] bg-[#FEE500] text-[#3C1E1E] text-senior-sm font-bold rounded-2xl shadow-md active:scale-[0.97] transition-all"
       >
-        카카오톡 공유
+        💬 카카오톡 공유
       </button>
+      <p className="text-center text-[15px] text-text-secondary mt-1">
+        💡 이미지를 저장한 뒤 카톡 단톡방에 올려보세요!
+      </p>
     </div>
   );
 }

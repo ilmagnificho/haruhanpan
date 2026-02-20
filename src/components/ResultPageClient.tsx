@@ -23,24 +23,28 @@ interface TestInfo {
   title: string;
   results: Record<string, TestResult>;
   leadText: string;
-  gradientColors: [string, string];
+  emoji: string;
+  gradientColors: [string, string, string];
 }
 
 const TEST_MAP: Record<string, TestInfo> = {
   'past-life': {
     ...(pastLifeData as { id: string; title: string; results: Record<string, TestResult> }),
     leadText: '당신의 전생은',
-    gradientColors: ['#667eea', '#764ba2'],
+    emoji: '🏛️',
+    gradientColors: ['#6366f1', '#a855f7', '#ec4899'],
   },
   'health-age': {
     ...(healthAgeData as { id: string; title: string; results: Record<string, TestResult> }),
     leadText: '당신의 건강 나이는',
-    gradientColors: ['#43e97b', '#38f9d7'],
+    emoji: '💪',
+    gradientColors: ['#059669', '#10b981', '#34d399'],
   },
   'idiom': {
     ...(idiomData as { id: string; title: string; results: Record<string, TestResult> }),
     leadText: '당신을 표현하는 사자성어',
-    gradientColors: ['#fa709a', '#fee140'],
+    emoji: '📜',
+    gradientColors: ['#dc2626', '#f59e0b', '#f97316'],
   },
 };
 
@@ -89,47 +93,58 @@ export default function ResultPageClient({
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-background">
       <Header />
 
       <main className="px-4 py-6">
+        {/* 축하 메시지 */}
         <div className="text-center mb-6">
-          <h1 className="text-senior-xl font-bold text-text-primary">
-            {test.title} 결과
+          <p className="text-[40px]">🎉</p>
+          <h1 className="text-senior-xl font-bold text-text-primary mt-1">
+            결과가 나왔어요!
           </h1>
         </div>
 
+        {/* 결과 이미지 - 풀 너비 */}
         <ResultImage
           testTitle={test.title}
           leadText={test.leadText}
           resultTitle={result.title}
           resultDescription={result.description}
+          emoji={test.emoji}
           gradientColors={test.gradientColors}
         />
 
-        <div className="mt-6 bg-card rounded-2xl p-6 shadow-md">
-          <h2 className="text-senior-lg font-bold text-primary text-center mb-3">
-            {displayTitle}
-          </h2>
-          <p className="text-senior-sm text-text-primary leading-relaxed text-center">
-            {result.description}
-          </p>
+        {/* 결과 상세 카드 */}
+        <div className="mt-6 bg-white rounded-3xl p-7 shadow-lg border border-gray-100">
+          <div className="text-center">
+            <span className="inline-block text-[14px] font-bold text-white bg-gradient-to-r from-primary to-[#FF6B4A] px-4 py-1.5 rounded-full mb-4">
+              {test.title}
+            </span>
+            <h2 className="text-[26px] font-bold text-text-primary mb-4">
+              {displayTitle}
+            </h2>
+            <p className="text-senior-sm text-text-secondary leading-relaxed">
+              {result.description}
+            </p>
+          </div>
         </div>
 
+        {/* 공유 버튼 */}
         <ShareButtons
           filename={`하루한판_${test.title}_결과.png`}
           kakaoTitle={`나의 ${test.title} 결과: "${result.title}"`}
           kakaoDescription="하루한판에서 나도 해보기!"
         />
 
-        <AdBanner className="mt-6" format="rectangle" />
+        <AdBanner className="mt-8" format="rectangle" />
 
-        <div className="text-center mt-8 mb-4">
+        <div className="text-center mt-8 mb-6">
           <a
             href="/"
-            className="text-senior-xs text-secondary underline"
+            className="inline-block text-senior-xs font-bold text-primary bg-primary/10 px-6 py-3 rounded-full"
           >
-            다른 테스트 해보기
+            🎯 다른 테스트 해보기
           </a>
         </div>
       </main>
