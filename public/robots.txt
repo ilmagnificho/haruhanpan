@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://haruhanpan.com/sitemap.xml
