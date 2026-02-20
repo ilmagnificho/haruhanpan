@@ -33,12 +33,13 @@ export default function FortunePage() {
   const [birthYear, setBirthYear] = useState('');
   const [showResult, setShowResult] = useState(false);
   const [zodiac, setZodiac] = useState<ZodiacKey | null>(null);
+  const [name, setName] = useState('');
 
   useEffect(() => {
-    const match = document.cookie.match(/birthYear=(\d{4})/);
-    if (match) {
-      setBirthYear(match[1]);
-    }
+    const yearMatch = document.cookie.match(/birthYear=(\d{4})/);
+    if (yearMatch) setBirthYear(yearMatch[1]);
+    const nameMatch = document.cookie.match(/userName=([^;]+)/);
+    if (nameMatch) setName(decodeURIComponent(nameMatch[1]));
   }, []);
 
   const handleSubmit = () => {
@@ -129,12 +130,13 @@ export default function FortunePage() {
 
         {/* 결과 이미지 (저장용) */}
         <ResultImage
-          testTitle="오늘의 운세"
+          testTitle="오늘의 띠별 운세"
           leadText={`${animalData.name} ${animalData.emoji}`}
-          resultTitle={todayFortune.text.slice(0, 20)}
-          resultDescription={`${todayFortune.text} 행운의 숫자: ${todayFortune.lucky_number} · 행운의 색: ${todayFortune.lucky_color}`}
+          resultTitle={todayFortune.text}
+          resultDescription={`행운의 숫자: ${todayFortune.lucky_number} · 행운의 색: ${todayFortune.lucky_color}`}
           emoji={animalData.emoji}
           gradientColors={GRADIENT_COLORS[zodiac]}
+          name={name || undefined}
         />
 
         {/* 골든 운세 카드 */}
@@ -170,6 +172,38 @@ export default function FortunePage() {
           kakaoDescription="하루한판에서 오늘의 운세를 확인해보세요!"
           saveButtonClassName="bg-save-green hover:bg-save-green/90"
         />
+
+        {/* 이름 입력 (선택) */}
+        <div className="mt-2 bg-primary/5 border border-primary/10 rounded-2xl p-5">
+          <p className="text-text-secondary text-[15px] mb-3 text-center">
+            📝 이름을 넣으면 더 특별한 이미지로 저장돼요!
+          </p>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              placeholder="이름 또는 닉네임 (선택)"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              maxLength={10}
+              className="flex-1 h-12 px-4 text-[16px] border-2 border-primary/20 rounded-xl bg-card text-text-primary placeholder:text-slate-400 focus:outline-none focus:border-primary"
+            />
+            <button
+              onClick={() => {
+                const trimmed = name.trim();
+                if (trimmed) {
+                  document.cookie = `userName=${encodeURIComponent(trimmed)}; max-age=${60 * 60 * 24 * 90}; path=/`;
+                  setName(trimmed);
+                } else {
+                  document.cookie = 'userName=; max-age=0; path=/';
+                  setName('');
+                }
+              }}
+              className="h-12 px-4 bg-primary text-white text-[15px] font-bold rounded-xl active:scale-95 transition-transform"
+            >
+              적용
+            </button>
+          </div>
+        </div>
 
         <AdBanner className="mt-8" />
 

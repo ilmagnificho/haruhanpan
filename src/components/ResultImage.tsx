@@ -11,6 +11,7 @@ interface ResultImageProps {
   emoji?: string;
   gradientColors?: [string, string, string];
   theme?: 'default' | 'dark-premium';
+  name?: string;
 }
 
 export default function ResultImage({
@@ -21,18 +22,19 @@ export default function ResultImage({
   emoji,
   gradientColors,
   theme = 'default',
+  name,
 }: ResultImageProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     if (!canvasRef.current) return;
-    const opts = { testTitle, leadText, resultTitle, resultDescription, emoji, gradientColors };
+    const opts = { testTitle, leadText, resultTitle, resultDescription, emoji, gradientColors, name };
     if (theme === 'dark-premium') {
       generateDarkResultCard(canvasRef.current, opts);
     } else {
       generateResultCard(canvasRef.current, opts);
     }
-  }, [testTitle, leadText, resultTitle, resultDescription, emoji, gradientColors, theme]);
+  }, [testTitle, leadText, resultTitle, resultDescription, emoji, gradientColors, theme, name]);
 
   const aspectRatio = theme === 'dark-premium' ? '1080/1350' : '1080/1920';
 

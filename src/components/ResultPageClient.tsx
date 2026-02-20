@@ -62,9 +62,14 @@ export default function ResultPageClient({
 }) {
   const [showResult, setShowResult] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [name, setName] = useState('');
 
   useEffect(() => {
     setMounted(true);
+    const match = document.cookie.match(/userName=([^;]+)/);
+    if (match) {
+      setName(decodeURIComponent(match[1]));
+    }
   }, []);
 
   const handleAdComplete = useCallback(() => {
@@ -120,6 +125,7 @@ export default function ResultPageClient({
             emoji={test.emoji}
             gradientColors={test.gradientColors}
             theme="dark-premium"
+            name={name || undefined}
           />
           {/* 축하 아이콘 */}
           <div className="absolute -top-3 -right-3 bg-primary-green text-white p-2.5 rounded-full shadow-lg transform rotate-12">
@@ -135,6 +141,38 @@ export default function ResultPageClient({
             kakaoDescription="하루한판에서 나도 해보기!"
             saveButtonClassName="bg-primary-green hover:bg-primary-green/90"
           />
+        </div>
+
+        {/* 이름 입력 (선택) */}
+        <div className="mt-4 bg-white/5 border border-white/10 rounded-2xl p-5">
+          <p className="text-white/70 text-[15px] mb-3 text-center">
+            📝 이름을 넣으면 더 특별한 이미지로 저장돼요!
+          </p>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              placeholder="이름 또는 닉네임 (선택)"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              maxLength={10}
+              className="flex-1 h-12 px-4 text-[16px] bg-white/10 border border-white/20 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-primary-green"
+            />
+            <button
+              onClick={() => {
+                const trimmed = name.trim();
+                if (trimmed) {
+                  document.cookie = `userName=${encodeURIComponent(trimmed)}; max-age=${60 * 60 * 24 * 90}; path=/`;
+                  setName(trimmed);
+                } else {
+                  document.cookie = 'userName=; max-age=0; path=/';
+                  setName('');
+                }
+              }}
+              className="h-12 px-4 bg-primary-green text-white text-[15px] font-bold rounded-xl active:scale-95 transition-transform"
+            >
+              적용
+            </button>
+          </div>
         </div>
 
         {/* 다른 테스트 */}

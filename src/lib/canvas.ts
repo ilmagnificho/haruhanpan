@@ -8,6 +8,7 @@ interface ResultCardOptions {
   resultDescription: string;
   emoji?: string;
   gradientColors?: [string, string, string];
+  name?: string;
 }
 
 async function loadFont() {
@@ -23,33 +24,72 @@ async function loadFont() {
   }
 }
 
+/**
+ * 한국어 최적화 텍스트 줄바꿈
+ * - 문자 단위 wrapping (한국어는 어디서나 줄바꿈 가능)
+ * - \n 지원
+ * - maxLines 초과 시 … 으로 잘라냄
+ */
 function wrapText(
   ctx: CanvasRenderingContext2D,
   text: string,
   x: number,
   y: number,
   maxWidth: number,
-  lineHeight: number
+  lineHeight: number,
+  maxLines = 10
 ): number {
-  const words = text.split(' ');
-  let line = '';
   let currentY = y;
+  let lineCount = 0;
 
-  for (const word of words) {
-    const testLine = line ? line + ' ' + word : word;
-    const metrics = ctx.measureText(testLine);
-    if (metrics.width > maxWidth && line.length > 0) {
+  const paragraphs = text.split('\n');
+
+  for (const paragraph of paragraphs) {
+    if (lineCount >= maxLines) break;
+
+    let line = '';
+    const chars = Array.from(paragraph); // Unicode-safe (이모지 등 포함)
+
+    for (let i = 0; i < chars.length; i++) {
+      if (lineCount >= maxLines - 1) {
+        // 마지막 허용 줄: 남은 텍스트가 있으면 ellipsis
+        const remaining = chars.slice(i).join('');
+        const testLine = line + remaining;
+        if (ctx.measureText(testLine).width <= maxWidth) {
+          line = testLine;
+          break;
+        }
+        // 잘라서 ellipsis
+        let truncated = line;
+        for (let j = i; j < chars.length; j++) {
+          const candidate = truncated + chars[j] + '…';
+          if (ctx.measureText(candidate).width > maxWidth) break;
+          truncated += chars[j];
+        }
+        ctx.fillText(truncated + '…', x, currentY);
+        currentY += lineHeight;
+        lineCount++;
+        return currentY;
+      }
+
+      const testLine = line + chars[i];
+      if (ctx.measureText(testLine).width > maxWidth && line.length > 0) {
+        ctx.fillText(line, x, currentY);
+        currentY += lineHeight;
+        lineCount++;
+        line = chars[i];
+      } else {
+        line = testLine;
+      }
+    }
+
+    if (line && lineCount < maxLines) {
       ctx.fillText(line, x, currentY);
-      line = word;
       currentY += lineHeight;
-    } else {
-      line = testLine;
+      lineCount++;
     }
   }
-  if (line) {
-    ctx.fillText(line, x, currentY);
-    currentY += lineHeight;
-  }
+
   return currentY;
 }
 
@@ -64,6 +104,7 @@ export async function generateResultCard(
     resultDescription,
     emoji = '✨',
     gradientColors = ['#6366f1', '#a855f7', '#ec4899'],
+    name,
   } = options;
 
   await loadFont();
@@ -120,20 +161,33 @@ export async function generateResultCard(
   ctx.font = `bold 38px ${fontFamily}`;
   ctx.fillText(testTitle, cx, 200);
 
+  // === 이름 (있을 때만) ===
+  if (name) {
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    ctx.font = `bold 32px ${fontFamily}`;
+    ctx.fillText(`✦ ${name}님의 결과 ✦`, cx, 260);
+  }
+
   // === 큰 이모지 ===
   ctx.font = `120px ${fontFamily}`;
-  ctx.fillText(emoji, cx, 400);
+  ctx.fillText(emoji, cx, name ? 420 : 400);
 
-  // === 리드 텍스트 ===
-  ctx.fillStyle = 'rgba(255,255,255,0.9)';
-  ctx.font = `36px ${fontFamily}`;
-  ctx.fillText(leadText, cx, 520);
+  // === 리드 텍스트 (pill 스타일) ===
+  ctx.font = `bold 36px ${fontFamily}`;
+  const leadMetrics = ctx.measureText(leadText);
+  const pillW = leadMetrics.width + 64;
+  const pillY = name ? 458 : 438;
+  ctx.fillStyle = 'rgba(255,255,255,0.22)';
+  roundRect(ctx, cx - pillW / 2, pillY, pillW, 56, 28);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,0.95)';
+  ctx.fillText(leadText, cx, pillY + 39);
 
   // === 메인 결과 카드 ===
   const cardX = 60;
-  const cardY = 580;
+  const cardY = 570;
   const cardW = CANVAS_WIDTH - 120;
-  const cardH = 520;
+  const cardH = 640; // 충분한 높이
 
   ctx.fillStyle = 'rgba(0,0,0,0.15)';
   roundRect(ctx, cardX + 6, cardY + 6, cardW, cardH, 40);
@@ -147,11 +201,13 @@ export async function generateResultCard(
   barGrad.addColorStop(0, gradientColors[0]);
   barGrad.addColorStop(1, gradientColors[2]);
   ctx.fillStyle = barGrad;
-  roundRectTop(ctx, cardX, cardY, cardW, 12, 40);
+  roundRectTop(ctx, cardX, cardY, cardW, 14, 40);
   ctx.fill();
 
   // 결과 타이틀
   ctx.fillStyle = gradientColors[0];
+  ctx.shadowColor = 'rgba(0,0,0,0.12)';
+  ctx.shadowBlur = 8;
   ctx.font = `bold 56px ${fontFamily}`;
   const titleLines = resultTitle.length > 10
     ? splitKoreanText(resultTitle)
@@ -161,6 +217,8 @@ export async function generateResultCard(
     ctx.fillText(line, cx, titleY);
     titleY += 72;
   }
+  ctx.shadowBlur = 0;
+  ctx.shadowColor = 'transparent';
 
   // 구분 장식
   const divY = titleY + 10;
@@ -183,21 +241,30 @@ export async function generateResultCard(
   ctx.fillRect(-8, -8, 16, 16);
   ctx.restore();
 
-  // 결과 설명
+  // 결과 설명 (한국어 문자 단위 줄바꿈, 최대 5줄)
   ctx.fillStyle = '#444444';
   ctx.font = `28px ${fontFamily}`;
-  wrapText(ctx, resultDescription, cx, divY + 60, cardW - 120, 44);
+  wrapText(ctx, resultDescription, cx, divY + 60, cardW - 120, 46, 5);
+
+  // 카드 하단 장식선
+  ctx.strokeStyle = `${gradientColors[0]}33`;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(cardX + 60, cardY + cardH - 30);
+  ctx.lineTo(cardX + cardW - 60, cardY + cardH - 30);
+  ctx.stroke();
 
   // === "공유하면 복이 와요!" ===
+  const shareY = cardY + cardH + 60;
   ctx.fillStyle = 'rgba(255,255,255,0.15)';
-  roundRect(ctx, 80, 1180, CANVAS_WIDTH - 160, 100, 50);
+  roundRect(ctx, 80, shareY, CANVAS_WIDTH - 160, 100, 50);
   ctx.fill();
   ctx.fillStyle = '#ffffff';
   ctx.font = `bold 34px ${fontFamily}`;
-  ctx.fillText('친구에게 공유하면 행운이 2배! 🍀', cx, 1245);
+  ctx.fillText('친구에게 공유하면 행운이 2배! 🍀', cx, shareY + 65);
 
   // === 워터마크 ===
-  const wmY = 1380;
+  const wmY = shareY + 160;
   ctx.fillStyle = 'rgba(255,255,255,0.2)';
   roundRect(ctx, 80, wmY, CANVAS_WIDTH - 160, 240, 30);
   ctx.fill();
@@ -242,6 +309,7 @@ export async function generateDarkResultCard(
     resultTitle,
     resultDescription,
     emoji = '✨',
+    name,
   } = options;
 
   await loadFont();
@@ -304,17 +372,25 @@ export async function generateDarkResultCard(
   ctx.font = `bold 36px ${fontFamily}`;
   ctx.fillText(`✨ ${testTitle} 결과 ✨`, cx, 160);
 
+  // === 이름 (있을 때만) ===
+  if (name) {
+    ctx.fillStyle = 'rgba(255, 215, 0, 0.85)';
+    ctx.font = `bold 38px ${fontFamily}`;
+    ctx.fillText(`${name}님의 결과`, cx, 210);
+  }
+
   // === 구분선 ===
   ctx.strokeStyle = 'rgba(43, 136, 61, 0.3)';
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.moveTo(cx - 60, 190);
-  ctx.lineTo(cx + 60, 190);
+  const divLineY = name ? 240 : 190;
+  ctx.moveTo(cx - 60, divLineY);
+  ctx.lineTo(cx + 60, divLineY);
   ctx.stroke();
 
   // === 큰 이모지 ===
   ctx.font = `100px ${fontFamily}`;
-  ctx.fillText(emoji, cx, 340);
+  ctx.fillText(emoji, cx, name ? 390 : 340);
 
   // === 메인 결과 타이틀 (골드) ===
   ctx.fillStyle = '#FFD700';
@@ -324,45 +400,48 @@ export async function generateDarkResultCard(
   const titleLines = resultTitle.length > 10
     ? splitKoreanText(resultTitle)
     : [resultTitle];
-  let titleY = 480;
+  let titleY = name ? 490 : 450;
   for (const line of titleLines) {
     ctx.fillText(line, cx, titleY);
     titleY += 80;
   }
   ctx.shadowBlur = 0;
+  ctx.shadowColor = 'transparent';
 
-  // === 결과 설명 ===
+  // === 결과 설명 (한국어 문자 단위 줄바꿈, 최대 4줄) ===
   ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
   ctx.font = `32px ${fontFamily}`;
-  wrapText(ctx, resultDescription, cx, titleY + 30, DARK_WIDTH - 200, 50);
+  const descEndY = wrapText(ctx, resultDescription, cx, titleY + 30, DARK_WIDTH - 200, 52, 4);
 
   // === "공유하면 복이 와요!" ===
+  const shareY = Math.max(descEndY + 30, name ? 870 : 830);
   ctx.fillStyle = 'rgba(255,255,255,0.08)';
-  roundRect(ctx, 100, 880, DARK_WIDTH - 200, 90, 45);
+  roundRect(ctx, 100, shareY, DARK_WIDTH - 200, 90, 45);
   ctx.fill();
   ctx.fillStyle = 'rgba(255,255,255,0.7)';
   ctx.font = `bold 30px ${fontFamily}`;
-  ctx.fillText('친구에게 공유하면 행운이 2배! 🍀', cx, 935);
+  ctx.fillText('친구에게 공유하면 행운이 2배! 🍀', cx, shareY + 55);
 
   // === 워터마크 ===
+  const wmY = Math.max(shareY + 130, name ? 1020 : 980);
   ctx.fillStyle = 'rgba(0,0,0,0.3)';
-  roundRect(ctx, 80, 1030, DARK_WIDTH - 160, 200, 24);
+  roundRect(ctx, 80, wmY, DARK_WIDTH - 160, 210, 24);
   ctx.fill();
   ctx.strokeStyle = 'rgba(43, 136, 61, 0.3)';
   ctx.lineWidth = 1;
-  roundRect(ctx, 80, 1030, DARK_WIDTH - 160, 200, 24);
+  roundRect(ctx, 80, wmY, DARK_WIDTH - 160, 210, 24);
   ctx.stroke();
 
   ctx.textAlign = 'center';
   ctx.fillStyle = 'rgba(255,255,255,0.6)';
   ctx.font = `bold 36px ${fontFamily}`;
-  ctx.fillText('네이버에서', cx, 1110);
+  ctx.fillText('네이버에서', cx, wmY + 70);
   ctx.fillStyle = '#ffffff';
   ctx.font = `bold 48px ${fontFamily}`;
-  ctx.fillText('"하루한판" 검색!', cx, 1170);
+  ctx.fillText('"하루한판" 검색!', cx, wmY + 140);
   ctx.fillStyle = 'rgba(255,255,255,0.35)';
   ctx.font = `22px ${fontFamily}`;
-  ctx.fillText('haruhanpan.com', cx, 1210);
+  ctx.fillText('haruhanpan.com', cx, wmY + 185);
 }
 
 function splitKoreanText(text: string): string[] {
